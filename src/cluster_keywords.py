@@ -1,17 +1,24 @@
+import os
 import pandas as pd
 from sentence_transformers import SentenceTransformer
 from sklearn.cluster import DBSCAN
-from sklearn.metrics.pairwise import cosine_distances
 import numpy as np
 
-# Load model
-model = SentenceTransformer('all-MiniLM-L6-v2')
+# Get the absolute path to the current script
+script_dir = os.path.dirname(os.path.abspath(__file__))
+data_dir = os.path.join(script_dir, '..', 'data')
 
 # Load keywords
-df = pd.read_csv('../data/keywords.csv')
+try:
+    df = pd.read_csv(os.path.join(data_dir, 'keywords.csv'))
+except FileNotFoundError:
+    print(f"Error: Could not find the file at {os.path.join(data_dir, 'keywords.csv')}")
+    exit(1)
+
 keywords = df['Top queries'].tolist()
 
 # Generate embeddings
+model = SentenceTransformer('all-MiniLM-L6-v2')
 embeddings = model.encode(keywords)
 
 # Cluster using DBSCAN
@@ -22,6 +29,7 @@ clusters = clustering_model.fit_predict(embeddings)
 df['cluster'] = clusters
 
 # Save output
-df.to_csv('../data/clustered_keywords.csv', index=False)
+output_path = os.path.join(data_dir, 'clustered_keywords.csv')
+df.to_csv(output_path, index=False)
 
-print("Clustering complete. Results saved to clustered_keywords.csv")
+print(f"Clustering complete. Results saved to {output_path}")
